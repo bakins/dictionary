@@ -1,7 +1,10 @@
 // Package dictionary implements a hash/map/dictionary for educational purposes.
 package dictionary
 
-import "container/list"
+import (
+	"container/list"
+	"sync"
+)
 
 type (
 	// Dictionary is a simple hashed dictionary. It is intended
@@ -40,6 +43,12 @@ type (
 	}
 )
 
+var itemPool = sync.Pool{
+	New: func() interface{} {
+		return &item{}
+	},
+}
+
 // New creates a new dictionary. Options can be set by passing in OptionsFunc
 func New(options ...OptionsFunc) *Dictionary {
 	d := &Dictionary{
@@ -73,10 +82,9 @@ func (d *Dictionary) getBucket(key Hasher) *list.List {
 func (d *Dictionary) Set(key Hasher, val interface{}) {
 	bucket := d.getBucket(key)
 
-	i := &item{
-		key:   key,
-		value: val,
-	}
+	i := itemPool.Get().(*item)
+	i.key = key
+	i.value = val
 
 	// quick exit, bucket is empty
 	if bucket.Len() == 0 {
@@ -96,6 +104,7 @@ func (d *Dictionary) Set(key Hasher, val interface{}) {
 			return
 		case 0:
 			// replace
+			itemPool.Put(v)
 			e.Value = i
 			return
 		}
@@ -139,7 +148,9 @@ func (d *Dictionary) Delete(key Hasher) (interface{}, bool) {
 	if bucket == nil || e == nil {
 		return nil, false
 	}
-	v := e.Value.(*item).value
+	i := e.Value.(*item)
+	v := i.value
+	itemPool.Put(i)
 	bucket.Remove(e)
 	return v, true
 }
