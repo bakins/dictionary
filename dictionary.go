@@ -50,8 +50,8 @@ func New(options ...OptionsFunc) *Dictionary {
 		f(d)
 	}
 
-	d.buckets = make([]*list.List, d.num_buckets)
-	for i := 0; uint32(i) < d.num_buckets; i++ {
+	d.buckets = make([]*list.List, d.numBuckets)
+	for i := 0; uint32(i) < d.numBuckets; i++ {
 		d.buckets[i] = list.New()
 	}
 	return d
