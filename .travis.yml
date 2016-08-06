@@ -9,3 +9,8 @@ notifications:
 before_install:
   - go get golang.org/x/tools/cmd/vet
   - go get github.com/golang/lint/golint
+
+script:
+  - $HOME/gopath/bin/golint ./...
+  - go test -v ./...
+  
