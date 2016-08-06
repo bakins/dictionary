@@ -9,7 +9,7 @@ type (
 	// It is not safe for concurrent use, so users should implement
 	// their own locking.
 	Dictionary struct {
-		num_buckets uint32
+		numBuckets uint32
 		// just use a simple list for our bucket
 		// this is not meant for very high performance, just as an example.
 		buckets []*list.List
@@ -29,7 +29,7 @@ type (
 	// returning a non-nil error will cause iteration to stop
 	EachFunc func(Hasher, interface{}) error
 
-	// Keys to be stored in a dictionary must implement the Hashed interface.
+	// Hasher defines interface for keys to be stored in a dictionary.
 	Hasher interface {
 		// Hash should return a hash of the key. Ideally, this should create
 		// a good distribution
@@ -43,7 +43,7 @@ type (
 // New creates a new dictionary. Options can be set by passing in OptionsFunc
 func New(options ...OptionsFunc) *Dictionary {
 	d := &Dictionary{
-		num_buckets: 31,
+		numBuckets: 31,
 	}
 
 	for _, f := range options {
@@ -57,14 +57,15 @@ func New(options ...OptionsFunc) *Dictionary {
 	return d
 }
 
+// SetBuckets will set the number of hash buckets.
 func SetBuckets(n uint32) func(d *Dictionary) {
 	return func(d *Dictionary) {
-		d.num_buckets = n
+		d.numBuckets = n
 	}
 }
 
 func (d *Dictionary) getBucket(key Hasher) *list.List {
-	n := key.Hash() % d.num_buckets
+	n := key.Hash() % d.numBuckets
 	return d.buckets[n]
 }
 
