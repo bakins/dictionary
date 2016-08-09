@@ -4,7 +4,7 @@
 
 Simple
 [dictionary/hash-table](https://en.wikipedia.org/wiki/Hash_table) in
-Go for education/testing.  It uses an array of double-linked list for
+Go for education/testing.  It uses an array of double-linked lists for
 the actual storage.  This is a good compromie between performance,
 memory usage, and complexity.  The number of buckets can be set at
 creation time.
