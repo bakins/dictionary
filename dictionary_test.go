@@ -168,5 +168,16 @@ func TestEach(t *testing.T) {
 
 }
 
+func ExampleNew() {
+	d := dictionary.New()
+	k := dictionary.StringKey("foo")
+
+	d.Set(k, "bar")
+	v, _ := d.Get(k)
+
+	fmt.Println(v.(string))
+	// Output: bar
+}
+
 // TODO: test keys
 // TODO: benchmarks of various bucket sizes
