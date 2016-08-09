@@ -81,17 +81,11 @@ func (d *Dictionary) Set(key Hasher, val interface{}) {
 		value: val,
 	}
 
-	// quick exit, bucket is empty
-	if bucket.Len() == 0 {
-		bucket.PushFront(i)
-		return
-	}
-
 	for e := bucket.Front(); e != nil; e = e.Next() {
 		v := e.Value.(*item)
 		// check the hash value first. If these are not equal, then the keys cannot be equal.
 		if v.hash == h && key.Equal(v.key) {
-			// replace
+			// replace. in future, we could return the replaced value.
 			e.Value = i
 			return
 		}
@@ -125,7 +119,6 @@ func (d *Dictionary) Get(key Hasher) (interface{}, bool) {
 }
 
 // Delete removes an item from the dictionary.  Returns the deleted value.
-//
 func (d *Dictionary) Delete(key Hasher) (interface{}, bool) {
 	bucket, e := d.getElement(key)
 	if bucket == nil || e == nil {
@@ -137,7 +130,7 @@ func (d *Dictionary) Delete(key Hasher) (interface{}, bool) {
 }
 
 // Each executes the function on each element. Error returned will be
-// any error the EachFunc returned tos top iteration
+// any error the EachFunc returned to stop iteration
 func (d *Dictionary) Each(f EachFunc) error {
 	for _, bucket := range d.buckets {
 		for e := bucket.Front(); e != nil; e = e.Next() {
@@ -169,3 +162,6 @@ func (d *Dictionary) Keys() []Hasher {
 	}
 	return keys
 }
+
+// TODO: add a fucntion which returns the distribution? could help user tune
+// number of buckets. Also perhaps interesting for metrics/testing.
