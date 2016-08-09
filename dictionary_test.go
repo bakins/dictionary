@@ -179,5 +179,16 @@ func ExampleNew() {
 	// Output: bar
 }
 
+func ExampleSetBuckets() {
+	d := dictionary.New(dictionary.SetBuckets(997))
+	k := dictionary.StringKey("foo")
+
+	d.Set(k, "bar")
+	v, _ := d.Get(k)
+
+	fmt.Println(v.(string))
+	// Output: bar
+}
+
 // TODO: test keys
 // TODO: benchmarks of various bucket sizes
