@@ -90,16 +90,8 @@ func (i intKey) Hash() uint32 {
 	return uint32(i - math.MaxUint32)
 }
 
-func (i intKey) Compare(v interface{}) int {
-	a := int(i)
-	b := int(v.(intKey))
-	if a < b {
-		return -1
-	}
-	if a == b {
-		return 0
-	}
-	return 1
+func (i intKey) Equal(v interface{}) bool {
+	return int(i) == int(v.(intKey))
 }
 
 func TestSimpleIntSet(t *testing.T) {
