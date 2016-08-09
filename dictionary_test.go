@@ -225,7 +225,6 @@ func BenchmarkSimple128(b *testing.B) {
 
 	addEntries(d, entries)
 
-	// run the Fib function b.N times
 	for n := 0; n < b.N; n++ {
 		for _, e := range entries {
 			_, _ = d.Get(e.key)
@@ -240,7 +239,6 @@ func Benchmark128BucketSize(b *testing.B) {
 
 	addEntries(d, entries)
 
-	// run the Fib function b.N times
 	for n := 0; n < b.N; n++ {
 		for _, e := range entries {
 			_, _ = d.Get(e.key)
