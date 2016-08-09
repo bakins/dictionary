@@ -16,9 +16,8 @@ type (
 	}
 
 	item struct {
-		// we could keep the hash value as an optimization
-		// if compare function was considered to be expensive
 		key   Hasher
+		hash  uint32
 		value interface{}
 	}
 
@@ -32,17 +31,19 @@ type (
 	// Hasher defines interface for keys to be stored in a dictionary.
 	Hasher interface {
 		// Hash should return a hash of the key. Ideally, this should create
-		// a good distribution
+		// a good distribution and avoid collisions.
 		Hash() uint32
-		// Compare must return -1 if the item is less than the argument. 0 if they are equal
-		// and 1 if the argument is greater than the item.
-		Compare(interface{}) int
+		// Equal must return true if the receiver is equal to the argument.
+		Equal(interface{}) bool
 	}
 )
 
 // New creates a new dictionary. Options can be set by passing in OptionsFunc
 func New(options ...OptionsFunc) *Dictionary {
 	d := &Dictionary{
+		// 31 is a good choice for a few dozen to a couple hundred keys.
+		// We could dynamically resize the number of buckets, but that increases
+		// the complexity.
 		numBuckets: 31,
 	}
 
@@ -64,16 +65,18 @@ func SetBuckets(n uint32) func(d *Dictionary) {
 	}
 }
 
-func (d *Dictionary) getBucket(key Hasher) *list.List {
-	n := key.Hash() % d.numBuckets
-	return d.buckets[n]
+func (d *Dictionary) getBucket(key Hasher) (uint32, *list.List) {
+	h := key.Hash()
+	n := h % d.numBuckets
+	return h, d.buckets[n]
 }
 
 // Set adds an item to the dictionary. It will replace any existing value.
 func (d *Dictionary) Set(key Hasher, val interface{}) {
-	bucket := d.getBucket(key)
+	h, bucket := d.getBucket(key)
 
 	i := &item{
+		hash:  h,
 		key:   key,
 		value: val,
 	}
@@ -86,36 +89,25 @@ func (d *Dictionary) Set(key Hasher, val interface{}) {
 
 	for e := bucket.Front(); e != nil; e = e.Next() {
 		v := e.Value.(*item)
-		// we use compare so that we do not have to traverse the entire list.
-		// this is a very minor optimization.
-		switch key.Compare(v.key) {
-		case -1:
-			// inserted key is "less than" the element, so insert it before.
-			// this allows the list to stay sorted
-			bucket.InsertBefore(i, e)
-			return
-		case 0:
+		// check the hash value first. If these are not equal, then the keys cannot be equal.
+		if v.hash == h && key.Equal(v.key) {
 			// replace
 			e.Value = i
 			return
 		}
 	}
 
-	// if we make it to here, then insert at end as the key is greater than anything else
-	bucket.PushBack(i)
+	// key not found, so add it
+	bucket.PushFront(i)
 }
 
 // helper to get the list and element.
 func (d *Dictionary) getElement(key Hasher) (*list.List, *list.Element) {
-	bucket := d.getBucket(key)
+	h, bucket := d.getBucket(key)
 	for e := bucket.Front(); e != nil; e = e.Next() {
-		item := e.Value.(*item)
-		switch key.Compare(item.key) {
-		case 0:
+		v := e.Value.(*item)
+		if v.hash == h && key.Equal(v.key) {
 			return bucket, e
-		case -1:
-			// this key is not in the list
-			return nil, nil
 		}
 	}
 	return nil, nil

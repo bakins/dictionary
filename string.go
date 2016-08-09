@@ -1,9 +1,6 @@
 package dictionary
 
-import (
-	"hash/crc32"
-	"strings"
-)
+import "hash/crc32"
 
 // StringKey is a convinience type for using strings as keys in a dictionary
 type StringKey string
@@ -14,8 +11,8 @@ func (s StringKey) Hash() uint32 {
 }
 
 // Compare uses the stdlib strings.Compare to compare two string keys
-func (s StringKey) Compare(v interface{}) int {
-	return strings.Compare(string(s), string(v.(StringKey)))
+func (s StringKey) Equal(v interface{}) bool {
+	return string(s) == string(v.(StringKey))
 }
 
 // String returns the string value of the key
