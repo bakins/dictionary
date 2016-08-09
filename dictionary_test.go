@@ -114,24 +114,36 @@ type intEntry struct {
 	val int
 }
 
-func TestIntSet(t *testing.T) {
-	d := dictionary.New()
-
-	entries := make([]intEntry, 0)
-	for i := 0; i < 8192; i++ {
-		e := intEntry{
+func createIntEntries(num int) []intEntry {
+	entries := make([]intEntry, num)
+	for i := 0; i < num; i++ {
+		entries[i] = intEntry{
 			key: intKey(i),
 			val: i,
 		}
-
-		entries = append(entries, e)
-		d.Set(e.key, &e)
 	}
 
 	for i := range entries {
 		j := rand.Intn(i + 1)
 		entries[i], entries[j] = entries[j], entries[i]
 	}
+
+	return entries
+}
+
+func addEntries(d *dictionary.Dictionary, entries []intEntry) {
+	for i := 0; i < len(entries); i++ {
+		e := &entries[i]
+		d.Set(e.key, e)
+	}
+}
+
+func TestIntSet(t *testing.T) {
+	d := dictionary.New()
+
+	entries := createIntEntries(8192)
+
+	addEntries(d, entries)
 
 	for _, e := range entries {
 		v, ok := d.Get(e.key)
@@ -192,3 +204,44 @@ func ExampleSetBuckets() {
 
 // TODO: test keys
 // TODO: benchmarks of various bucket sizes
+
+func BenchmarkMap(b *testing.B) {
+	m := make(map[intKey]int)
+	entries := createIntEntries(128)
+	for _, e := range entries {
+		m[e.key] = e.val
+	}
+	for n := 0; n < b.N; n++ {
+		for _, e := range entries {
+			_, _ = m[e.key]
+		}
+	}
+}
+
+func BenchmarkSimple128(b *testing.B) {
+	d := dictionary.New()
+
+	entries := createIntEntries(128)
+
+	addEntries(d, entries)
+
+	for n := 0; n < b.N; n++ {
+		for _, e := range entries {
+			_, _ = d.Get(e.key)
+		}
+	}
+}
+
+func Benchmark128BucketSize(b *testing.B) {
+	d := dictionary.New(dictionary.SetBuckets(127))
+
+	entries := createIntEntries(128)
+
+	addEntries(d, entries)
+
+	for n := 0; n < b.N; n++ {
+		for _, e := range entries {
+			_, _ = d.Get(e.key)
+		}
+	}
+}
